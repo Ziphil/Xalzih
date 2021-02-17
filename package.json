@@ -12,6 +12,9 @@
     "serve": "node dist/index.js",
     "start": "npm run build && npm run serve"
   },
+  "engines": {
+    "node": "12.x"
+  },
   "eslintConfig": {
     "extends": "ziphil"
   },

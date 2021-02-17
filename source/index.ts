@@ -42,7 +42,7 @@ export class Main {
           }
           response.end();
         });
-      } else if (request.method === "GET"){
+      } else if (request.method === "GET") {
         response.writeHead(200);
         response.end("active");
       }

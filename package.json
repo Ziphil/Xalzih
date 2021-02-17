@@ -1,0 +1,46 @@
+{
+  "name": "xalzih",
+  "version": "1.0.0",
+  "author": "Ziphil",
+  "description": "",
+  "homepage": "https://github.com/Ziphil/Xalzih",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "scripts": {
+    "develop": "nodemon",
+    "build": "tsc",
+    "serve": "node dist/index.js",
+    "start": "npm run build && npm run serve"
+  },
+  "eslintConfig": {
+    "extends": "ziphil"
+  },
+  "nodemonConfig": {
+    "watch": [
+      "source"
+    ],
+    "ext": "ts",
+    "exec": "ts-node ./source/index.ts"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.0",
+    "@types/node": "^14.14.28",
+    "@types/ws": "^7.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.9.1",
+    "@typescript-eslint/parser": "^4.9.1",
+    "eslint": "^7.15.0",
+    "eslint-config-ziphil": "^1.2.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-jsdoc": "^30.7.8",
+    "ts-node": "^9.0.0",
+    "ts-node-dev": "^1.0.0",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "axios": "^0.21.1",
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "nodemon": "^2.0.7",
+    "querystring": "^0.2.1"
+  }
+}

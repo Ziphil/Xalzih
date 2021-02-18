@@ -64,7 +64,8 @@ export class Main {
       try {
         let match;
         if (match = message.content.match(/^!sotik\s*(.+)$/)) {
-          let params = {mode: "fetch_discord", name: match[1]};
+          let name = match[1].trim();
+          let params = {mode: "fetch_discord", name};
           let response = await axios.get("http://ziphil.com/program/interface/3.cgi", {params});
           if ("embeds" in response.data) {
             let embed = response.data.embeds[0];

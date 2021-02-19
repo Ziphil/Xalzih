@@ -4,11 +4,10 @@ import axios from "axios";
 import {
   Client
 } from "discord.js";
-import * as http from "http";
+import express from "express";
 import {
-  Server
-} from "http";
-import * as query from "querystring";
+  Express
+} from "express";
 import {
   DISCORD_KEY
 } from "./variable";
@@ -16,50 +15,33 @@ import {
 
 export class Main {
 
-  private server!: Server;
+  private application!: Express;
   private client!: Client;
 
   public main(): void {
-    this.makeServer();
-    this.makeClient();
+    this.application = express();
+    this.client = this.createClient();
+    this.setupServer();
     this.setupListeners();
     this.listen();
   }
 
-  private makeServer(): void {
-    let server = http.createServer((request, response) => {
-      if (request.method === "POST") {
-        let data = "";
-        request.on("data", (chunk) => {
-          data += chunk;
-        });
-        request.on("end", () => {
-          if (data !== "") {
-            let dataObject = query.parse(data);
-            if (dataObject.type === "wake") {
-              console.log("woke up");
-            }
-          }
-          response.end();
-        });
-      } else if (request.method === "GET") {
-        response.writeHead(200);
-        response.end("active");
-      }
-    });
-    this.server = server;
+  private createClient(): Client {
+    let client = new Client();
+    return client;
   }
 
-  private makeClient(): void {
-    let client = new Client();
-    client.on("ready", () => {
-      console.log("xalzih ready");
-      client.user?.setPresence({activity: {name: "xalzih"}});
+  private setupServer(): void {
+    this.application.get("/", (request, response) => {
+      response.send("awake").end();
     });
-    this.client = client;
   }
 
   private setupListeners(): void {
+    this.client.on("ready", () => {
+      console.log("xalzih ready");
+      this.client.user?.setPresence({activity: {name: "xalzih"}});
+    });
     this.client.on("message", async (message) => {
       try {
         let match;
@@ -83,7 +65,9 @@ export class Main {
 
   private listen(): void {
     this.client.login(DISCORD_KEY);
-    this.server.listen(3000);
+    this.application.listen(3000, () => {
+      console.log("xalzih start");
+    });
   }
 
 }

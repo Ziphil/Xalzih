@@ -33,6 +33,7 @@ export class Main {
 
   private setupServer(): void {
     this.application.get("/", (request, response) => {
+      console.log("awake");
       response.send("awake").end();
     });
   }

@@ -62,6 +62,23 @@ export class Main {
         console.error(error);
       }
     });
+    this.client.on("message", async (message) => {
+      try {
+        let author = message.author;
+        if (author.id === "359323388071903232" && message.content.match(/^\*\*\[\s*\d+\s*\]\*\*\s*\n/)) {
+          let matches = Array.from(message.content.matchAll(/(..\u{20E3}|[\u{1F1E6}-\u{1F1FF}])/gu));
+          let wrappers = matches.map((match) => {
+            let wrapper = function (): Promise<void> {
+              return message.react(match[0]).then();
+            };
+            return wrapper;
+          });
+          await wrappers.reduce((previous, current) => previous.then(current), Promise.resolve());
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
   }
 
   private listen(): void {

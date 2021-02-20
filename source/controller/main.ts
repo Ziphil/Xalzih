@@ -48,15 +48,17 @@ export class MainController extends Controller {
   private async repsondWord(client: Client, message: Message): Promise<void> {
     let match;
     if (match = message.content.match(/^!sotik\s*(.+)$/)) {
-      let name = match[1].trim();
-      let params = {mode: "fetch_discord", name};
-      let response = await axios.get(URLS.dictionary, {params});
-      if ("embeds" in response.data) {
-        let embed = response.data.embeds[0];
-        await message.channel.send({embed});
-      } else {
-        let content = `kocaqat a sotik adak iva “${name}”.`;
-        await message.channel.send(content);
+      let names = match[1].trim().split(/\s+/);
+      for (let name of names) {
+        let params = {mode: "fetch_discord", name};
+        let response = await axios.get(URLS.dictionary, {params});
+        if ("embeds" in response.data) {
+          let embed = response.data.embeds[0];
+          await message.channel.send({embed});
+        } else {
+          let content = `kocaqat a sotik adak iva “${name}”.`;
+          await message.channel.send(content);
+        }
       }
     }
   }

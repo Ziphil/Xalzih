@@ -1,5 +1,9 @@
 //
 
+import {
+  MessageEmbed
+} from "discord.js";
+
 
 export class Quiz {
 
@@ -41,6 +45,17 @@ export class Quiz {
         return undefined;
       }
     }
+  }
+
+  public createEmbed(url: string): MessageEmbed {
+    let embed = new MessageEmbed();
+    embed.title = `第 ${this.number} 問`;
+    embed.description = this.questionMarkup;
+    embed.color = 0x33C3FF;
+    embed.addField("正解", `||${this.answer}||`, true);
+    embed.addField("原文リンク", `[こちら](${url})`, true);
+    embed.addField("解説", `||${this.commentary}||`, false);
+    return embed;
   }
 
   public get questionMarkup(): string {

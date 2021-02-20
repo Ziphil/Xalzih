@@ -87,13 +87,7 @@ export class MainController extends Controller {
         let content = quizMessage?.content;
         let quiz = Quiz.parse(content);
         if (quiz !== undefined) {
-          let embed = new MessageEmbed();
-          embed.title = `第 ${quiz.number} 問`;
-          embed.description = quiz.questionMarkup;
-          embed.color = 0x33C3FF;
-          embed.addField("正解", `||${quiz.answer}||`, true);
-          embed.addField("原文リンク", `[こちら](${quizMessage.url})`, true);
-          embed.addField("解説", `||${quiz.commentary}||`, false);
+          let embed = quiz.createEmbed(quizMessage.url);
           await message.channel.send({embed});
         } else {
           await message.channel.send("kodat e zel atùk.");

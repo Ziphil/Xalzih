@@ -4,9 +4,14 @@ import axios from "axios";
 import {
   Client,
   Message,
+  MessageEmbed,
   Snowflake,
   TextChannel
 } from "discord.js";
+import e from "express";
+import {
+  Quiz
+} from "../util/quiz";
 import {
   Controller
 } from "./controller";
@@ -62,8 +67,7 @@ export class MainController extends Controller {
           let embed = response.data.embeds[0];
           await message.channel.send({embed});
         } else {
-          let content = `kocaqat a sotik adak iva “${name}”.`;
-          await message.channel.send(content);
+          await message.channel.send(`kocaqat a sotik adak iva “${name}”.`);
         }
       }
     }
@@ -81,10 +85,21 @@ export class MainController extends Controller {
       let quizMessage = await this.searchQuizMessage(client, number);
       if (quizMessage !== undefined) {
         let content = quizMessage?.content;
-        await message.channel.send({content});
+        let quiz = Quiz.parse(content);
+        if (quiz !== undefined) {
+          let embed = new MessageEmbed();
+          embed.title = `第 ${quiz.number} 問`;
+          embed.description = quiz.questionMarkup;
+          embed.color = 0x33C3FF;
+          embed.addField("正解", `||${quiz.answer}||`, true);
+          embed.addField("原文リンク", `[こちら](${quizMessage.url})`, true);
+          embed.addField("解説", `||${quiz.commentary}||`, false);
+          await message.channel.send({embed});
+        } else {
+          await message.channel.send("kodat e zel atùk.");
+        }
       } else {
-        let content = `dukocaqat a zelad ac'${number}.`;
-        await message.channel.send(content);
+        await message.channel.send(`dukocaqat a zelad ac'${number}.`);
       }
     }
   }

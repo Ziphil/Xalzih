@@ -70,8 +70,9 @@ export class MainController extends Controller {
     if (hasPermission && correctChannel) {
       if (message.content.match(/^\*\*\[\s*\d+\s*\]\*\*\s*\n/)) {
         let matches = Array.from(message.content.matchAll(/(..\u{20E3}|[\u{1F1E6}-\u{1F1FF}])/gu));
-        let promise = matches.reduce((previous, match) => previous.then(() => message.react(match[0]).then()), Promise.resolve());
-        await promise;
+        for (let match of matches) {
+          await message.react(match[0]);
+        }
       }
     }
   }

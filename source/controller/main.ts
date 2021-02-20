@@ -47,8 +47,12 @@ export class MainController extends Controller {
   @listener("message")
   private async repsondWord(client: Client, message: Message): Promise<void> {
     let match;
-    if (match = message.content.match(/^!sotik\s*(.+)$/)) {
-      let names = match[1].trim().split(/\s+/);
+    if (match = message.content.match(/^!sotik(\-del)?\s+(.+)$/)) {
+      let deleteAfter = match[1];
+      let names = match[2].trim().split(/\s+/);
+      if (deleteAfter) {
+        await message.delete();
+      }
       for (let name of names) {
         let params = {mode: "fetch_discord", name};
         let response = await axios.get(URLS.dictionary, {params});

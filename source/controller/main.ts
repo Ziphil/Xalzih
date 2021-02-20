@@ -3,7 +3,9 @@
 import axios from "axios";
 import {
   Client,
-  Message
+  Message,
+  Snowflake,
+  TextChannel
 } from "discord.js";
 import {
   Controller
@@ -64,6 +66,46 @@ export class MainController extends Controller {
           await message.channel.send(content);
         }
       }
+    }
+  }
+
+  @listener("message")
+  private async respondQuiz(client: Client, message: Message): Promise<void> {
+    let match;
+    if (match = message.content.match(/^!zelad(\-del)?\s+(\d+)$/)) {
+      let deleteAfter = match[1];
+      let number = +match[2];
+      if (deleteAfter) {
+        await message.delete();
+      }
+      let quizMessage = await this.searchQuizMessage(client, number);
+      if (quizMessage !== undefined) {
+        let content = quizMessage?.content;
+        await message.channel.send({content});
+      } else {
+        let content = `dukocaqat a zelad ac'${number}.`;
+        await message.channel.send(content);
+      }
+    }
+  }
+
+  private async searchQuizMessage(client: Client, number: number): Promise<Message | undefined> {
+    let channel = client.channels.cache.get(CHANNEL_IDS.sokad.zelad);
+    if (channel instanceof TextChannel) {
+      let quizMessage = undefined as Message | undefined;
+      let before = undefined as Snowflake | undefined;
+      while (true) {
+        let messages = await channel.messages.fetch({limit: 100, before});
+        let regexp = new RegExp(`^\\*\\*\\[\\s*${number}\\s*\\]\\*\\*\\s*解説\\s*\n`);
+        quizMessage = messages.find((message) => message.content.match(regexp) !== null);
+        before = messages.last()?.id;
+        if (quizMessage !== undefined || messages.size < 100) {
+          break;
+        }
+      }
+      return quizMessage;
+    } else {
+      throw new Error("bug: this channel is not a text channel");
     }
   }
 

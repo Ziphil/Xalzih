@@ -54,7 +54,7 @@ export class MainController extends Controller {
   @listener("message")
   private async repsondWord(client: Client, message: Message): Promise<void> {
     let match;
-    if (match = message.content.match(/^!sotik(\-del)?\s+(.+)$/)) {
+    if (match = message.content.match(/^!sotik(-detuk)?\s+(.+)$/)) {
       let deleteAfter = match[1];
       let names = match[2].trim().split(/\s+/);
       if (deleteAfter) {
@@ -76,7 +76,7 @@ export class MainController extends Controller {
   @listener("message")
   private async respondQuiz(client: Client, message: Message): Promise<void> {
     let match;
-    if (match = message.content.match(/^!zelad(\-del)?\s+(\d+)$/)) {
+    if (match = message.content.match(/^!zelad(-detuk)?\s+(\d+)$/)) {
       let deleteAfter = match[1];
       let number = +match[2];
       if (deleteAfter) {

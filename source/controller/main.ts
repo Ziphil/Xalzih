@@ -77,9 +77,8 @@ export class MainController extends Controller {
     }
   }
 
-  // 任意のチャンネルの「!zelad (単語)」という投稿に反応して、オンライン辞典から該当単語のエントリーを抽出して投稿します。
+  // 任意のチャンネルの「!zelad (番号)」という投稿に反応して、検定チャンネルの該当番号の解説投稿を検索し、その内容を整形して投稿します。
   // コマンド名部分を「!zelad」の代わりに「!zelad-detuk」とすると、そのコマンドの投稿が削除されます。
-  // 単語はスペース区切りで複数個指定できます。
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
     let match = message.content.match(/^!zelad(-detuk)?\s+(\d+)$/);

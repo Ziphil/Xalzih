@@ -13,7 +13,7 @@ import {
 const KEY = Symbol("key");
 
 type ClientEventKeys = keyof ClientEvents;
-type Metadata = {[name: string]: ClientEventKeys};
+type Metadata = Array<[name: string | symbol, event: ClientEventKeys]>;
 type ControllerDecorator = (clazz: new() => Controller) => void;
 
 export function controller(): ControllerDecorator {
@@ -21,8 +21,8 @@ export function controller(): ControllerDecorator {
     let originalSetup = clazz.prototype.setup;
     clazz.prototype.setup = function (this: Controller, client: Client): void {
       let anyThis = this as any;
-      let object = Reflect.getMetadata(KEY, clazz.prototype) as Metadata;
-      for (let [name, event] of Object.entries(object)) {
+      let metadata = Reflect.getMetadata(KEY, clazz.prototype) as Metadata;
+      for (let [name, event] of metadata) {
         client.on(event, (...args) => {
           Promise.resolve(anyThis[name](client, ...args)).catch((error) => console.error(error));
         });
@@ -35,12 +35,12 @@ export function controller(): ControllerDecorator {
 
 export function listener(event: ClientEventKeys): MethodDecorator {
   let decorator = function (target: object, name: string | symbol, descriptor: PropertyDescriptor): void {
-    let object = Reflect.getMetadata(KEY, target);
-    if (!object) {
-      object = {};
-      Reflect.defineMetadata(KEY, object, target);
+    let metadata = Reflect.getMetadata(KEY, target);
+    if (!metadata) {
+      metadata = [];
+      Reflect.defineMetadata(KEY, metadata, target);
     }
-    object[name] = event;
+    metadata.push([name, event]);
   };
   return decorator;
 }

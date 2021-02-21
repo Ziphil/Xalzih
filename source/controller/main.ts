@@ -22,7 +22,8 @@ import {
 
 
 const URLS = {
-  dictionary: "http://ziphil.com/program/interface/3.cgi"
+  dictionary: "http://ziphil.com/program/interface/3.cgi",
+  github: "https://github.com/Ziphil/Xalzih"
 };
 const CHANNEL_IDS = {
   sokad: {
@@ -48,7 +49,7 @@ export class MainController extends Controller {
   @listener("ready")
   private async ready(client: Client): Promise<void> {
     console.log("xalzih ready");
-    await client.user?.setPresence({activity: {name: "xalzih"}});
+    await client.user?.setPresence({activity: {name: "xalzih", url: URLS.github}});
   }
 
   @listener("message")

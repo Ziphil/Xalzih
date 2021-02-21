@@ -47,13 +47,16 @@ const ROLE_IDS = {
 export class MainController extends Controller {
 
   @listener("ready")
-  private async ready(client: Client): Promise<void> {
+  private async [Symbol()](client: Client): Promise<void> {
     console.log("xalzih ready");
     await client.user?.setPresence({activity: {name: "xalzih", url: URLS.github}});
   }
 
+  // 任意のチャンネルの「!sotik (単語)」という投稿に反応して、オンライン辞典から該当単語のエントリーを抽出して投稿します。
+  // コマンド名部分を「!sotik」の代わりに「!sotik-detuk」とすると、そのコマンドの投稿が削除されます。
+  // 単語はスペース区切りで複数個指定できます。
   @listener("message")
-  private async repsondWord(client: Client, message: Message): Promise<void> {
+  private async [Symbol()](client: Client, message: Message): Promise<void> {
     let match;
     if (match = message.content.match(/^!sotik(-detuk)?\s+(.+)$/)) {
       let deleteAfter = match[1];
@@ -74,8 +77,11 @@ export class MainController extends Controller {
     }
   }
 
+  // 任意のチャンネルの「!zelad (単語)」という投稿に反応して、オンライン辞典から該当単語のエントリーを抽出して投稿します。
+  // コマンド名部分を「!zelad」の代わりに「!zelad-detuk」とすると、そのコマンドの投稿が削除されます。
+  // 単語はスペース区切りで複数個指定できます。
   @listener("message")
-  private async respondQuiz(client: Client, message: Message): Promise<void> {
+  private async [Symbol()](client: Client, message: Message): Promise<void> {
     let match;
     if (match = message.content.match(/^!zelad(-detuk)?\s+(\d+)$/)) {
       let deleteAfter = match[1];
@@ -119,8 +125,10 @@ export class MainController extends Controller {
     }
   }
 
+  // 検定チャンネルに問題が投稿されたときに、投稿文中に含まれている選択肢の絵文字のリアクションを自動的に付けます。
+  // 選択肢として使える絵文字は、数字もしくはラテン文字の絵文字のみです。
   @listener("message")
-  private async reactQuiz(client: Client, message: Message): Promise<void> {
+  private async [Symbol()](client: Client, message: Message): Promise<void> {
     let hasPermission = message.member?.roles.cache.find((role) => role.id === ROLE_IDS.zisvalod) !== undefined;
     let correctChannel = message.channel.id === CHANNEL_IDS.sokad.zelad || message.channel.id === CHANNEL_IDS.test;
     if (hasPermission && correctChannel) {

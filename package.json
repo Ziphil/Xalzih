@@ -16,7 +16,10 @@
     "node": "12.x"
   },
   "eslintConfig": {
-    "extends": "ziphil"
+    "extends": "ziphil",
+    "rules": {
+      "@typescript-eslint/adjacent-overload-signatures": "off"
+    }
   },
   "nodemonConfig": {
     "watch": [

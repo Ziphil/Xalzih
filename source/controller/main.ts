@@ -84,7 +84,7 @@ export class MainController extends Controller {
   // コマンド名部分を「!result」の代わりに「!result-detuk」とすると、そのコマンドの投稿が削除されます。
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
-    let match = message.content.match(/^!result(-detuk)?(?:\s+(\d+))?$/);
+    let match = message.content.match(/^!doklet(-detuk)?(?:\s+(\d+))?$/);
     if (match) {
       let deleteAfter = match[1];
       let userId = match[2];

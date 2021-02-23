@@ -16,12 +16,12 @@ export class Quiz {
 
   public readonly number: number;
   public readonly sentences: Readonly<QuizSentences>;
-  public readonly choices: string;
+  public readonly choices: ReadonlyArray<QuizChoice>;
   public readonly answer: string;
   public readonly commentary: string;
   public readonly urls: Readonly<QuizUrls>;
 
-  private constructor(number: number, sentences: QuizSentences, choices: string, answer: string, commentary: string, urls: QuizUrls) {
+  private constructor(number: number, sentences: QuizSentences, choices: Array<QuizChoice>, answer: string, commentary: string, urls: QuizUrls) {
     this.number = number;
     this.sentences = sentences;
     this.choices = choices;
@@ -82,13 +82,14 @@ export class Quiz {
       let numberMatch = mainLines[0]?.match(/^\*\*\[\s*(\d+)\s*\]\*\*/);
       let shaleianMatch = mainLines[1]?.match(/^>\s*(.+)/);
       let translationMatch = mainLines[2]?.match(/^>\s*(.+)/);
+      let choiceMatch = mainLines[3]?.matchAll(/(..\u{20E3}|[\u{1F1E6}-\u{1F1FF}])\s*(.+?)\s*(　|$)/gu);
       let answerMatch = commentaryLines[0]?.match(/\*\*\s*正解\s*\*\*\s*:\s*(.+)/);
       if (mainLines.length >= 4 && commentaryLines.length >= 2 && numberMatch && shaleianMatch && translationMatch && answerMatch) {
         let number = +numberMatch[1];
         let shaleianSentence = shaleianMatch[1].trim();
         let translationSentence = translationMatch[1].trim();
         let sentences = {shaleian: shaleianSentence, translation: translationSentence};
-        let choices = mainLines[3].trim();
+        let choices = Array.from(choiceMatch).map((match) => ({mark: match[1], content: match[2]}));
         let answer = answerMatch[1].trim();
         let commentary = commentaryLines.slice(1, -1).join("").trim();
         let urls = {problem: sources.problem.url, commentary: sources.commentary.url};
@@ -116,7 +117,7 @@ export class Quiz {
     let markup = "";
     markup += `> ${this.sentences.shaleian}\n`;
     markup += `> ${this.sentences.translation}\n`;
-    markup += this.choices;
+    markup += this.choices.map((choice) => `${choice.mark} ${choice.content}`).join("　");
     return markup;
   }
 
@@ -124,6 +125,7 @@ export class Quiz {
 
 
 export type QuizSentences = {shaleian: string, translation: string};
+export type QuizChoice = {mark: string, content: string};
 export type QuizUrls = {problem: string, commentary: string};
 
 type QuizSources = {problem: Message, commentary: Message};

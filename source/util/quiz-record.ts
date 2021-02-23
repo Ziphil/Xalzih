@@ -70,8 +70,8 @@ export class QuizRecord {
     embed.color = 0x33C3FF;
     embed.setAuthor(this.user.username, this.user.avatarURL() ?? undefined);
     embed.addField("\u{2705} 正解", `**${counts.correct}** / ${counts.all}`, true);
-    embed.addField("\u{274E} 不正解",  `**${counts.wrong}** / ${counts.all}`, true);
-    embed.addField("\u{1F196} 無効",  `**${counts.invalid}** / ${counts.all}`, true);
+    embed.addField("\u{274E} 不正解", `**${counts.wrong}** / ${counts.all}`, true);
+    embed.addField("\u{1F196} 無効", `**${counts.invalid}** / ${counts.all}`, true);
     embed.addField("個別成績", this.resultMarkup, false);
     return embed;
   }

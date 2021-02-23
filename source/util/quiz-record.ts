@@ -26,14 +26,39 @@ export class QuizRecord {
 
   public static async fetch(client: Client, user: User) {
     let results = new Map<number, QuizResult>();
-    for await (let {sources, quiz} of Quiz.iterate(client)) {
-      let winners = await sources.problem.reactions.resolve(quiz.answer)?.users.fetch();
-      if (winners) {
-        let win = winners.find((winner) => winner.id === user.id) !== undefined;
-        let urls = quiz.urls;
-        results.set(quiz.number, {win, urls});
-      }
+    let iterations = [];
+    for await (let iteration of Quiz.iterate(client)) {
+      iterations.push(iteration);
     }
+    let promises = iterations.map(async ({quiz, sources}) => {
+      let promises = quiz.choices.map((choice) => {
+        let mark = choice.mark;
+        let reaction = sources.problem.reactions.resolve(mark);
+        let promise = reaction?.users.fetch().then((selectUsers) => {
+          let selected = selectUsers.find((selectUser) => selectUser.id === user.id) !== undefined;
+          return {mark, selected};
+        });
+        return promise ?? {mark, selected: false};
+      });
+      let selectResults = await Promise.all(promises);
+      let correct = false;
+      let wrong = false;
+      for (let selectResult of selectResults) {
+        if (selectResult.selected) {
+          if (selectResult.mark === quiz.answer) {
+            correct = true;
+          } else {
+            wrong = true;
+          }
+        }
+      }
+      if (correct || wrong) {
+        let status = (correct && wrong) ? "invalid" : (correct) ? "correct" : "wrong" as any;
+        let urls = quiz.urls;
+        results.set(quiz.number, {status, urls});
+      }
+    });
+    await Promise.all(promises);
     let record = new QuizRecord(user, results);
     return record;
   }
@@ -44,8 +69,9 @@ export class QuizRecord {
     embed.title = "シャレイア語検定成績";
     embed.color = 0x33C3FF;
     embed.setAuthor(this.user.username, this.user.avatarURL() ?? undefined);
-    embed.addField("正解", `**${counts.win}** / ${counts.all}`, true);
-    embed.addField("不正解",  `**${counts.lose}** / ${counts.all}`, true);
+    embed.addField("\u{2705} 正解", `**${counts.correct}** / ${counts.all}`, true);
+    embed.addField("\u{274E} 不正解",  `**${counts.wrong}** / ${counts.all}`, true);
+    embed.addField("\u{1F196} 無効",  `**${counts.invalid}** / ${counts.all}`, true);
     embed.addField("個別成績", this.resultMarkup, false);
     return embed;
   }
@@ -53,22 +79,18 @@ export class QuizRecord {
   public get resultMarkup(): string {
     let markup = "";
     let resultMarkups = Array.from(this.results.entries()).map(([number, result]) => {
-      let winChar = (result.win) ? "\u2B55" : "\u274C";
-      return `[${number}](${result.urls.commentary}) ${winChar}`;
+      let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
+      return `[${number}](${result.urls.commentary}) ${statusMark}`;
     });
     markup += resultMarkups.join("　");
     return markup;
   }
 
   public get counts(): QuizResultCounts {
-    let counts = {all: 0, win: 0, lose: 0};
+    let counts = {all: 0, correct: 0, wrong: 0, invalid: 0};
     this.results.forEach((result) => {
       counts.all ++;
-      if (result.win) {
-        counts.win ++;
-      } else {
-        counts.lose ++;
-      }
+      counts[result.status] ++;
     });
     return counts;
   }
@@ -76,5 +98,5 @@ export class QuizRecord {
 }
 
 
-export type QuizResult = {win: boolean, urls: QuizUrls};
-export type QuizResultCounts = {all: number, win: number, lose: number};
+export type QuizResult = {status: "correct" | "wrong" | "invalid", urls: QuizUrls};
+export type QuizResultCounts = {all: number, correct: number, wrong: number, invalid: number};

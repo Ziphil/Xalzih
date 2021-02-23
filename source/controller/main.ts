@@ -80,6 +80,8 @@ export class MainController extends Controller {
     }
   }
 
+  // 任意のチャンネルの「!result」という投稿に反応して、その投稿をしたユーザーのクイズの成績を整形して投稿します。
+  // コマンド名部分を「!result」の代わりに「!result-detuk」とすると、そのコマンドの投稿が削除されます。
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
     let match = message.content.match(/^!result(-detuk)?(?:\s+(\d+))?$/);
@@ -98,11 +100,14 @@ export class MainController extends Controller {
 
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
-    let match = message.content.match(/^!save\s+(\d+)$/);
-    if (match) {
-      let number = +match[1];
-      await message.delete();
-      await QuizRecord.save(client, number);
+    let hasPermission = message.member?.roles.cache.find((role) => role.id === ROLE_IDS.zisvalod) !== undefined;
+    if (hasPermission) {
+      let match = message.content.match(/^!save\s+(\d+)$/);
+      if (match) {
+        let number = +match[1];
+        await message.delete();
+        await QuizRecord.save(client, number);
+      }
     }
   }
 

@@ -4,11 +4,14 @@ import axios from "axios";
 import {
   Client,
   Message,
-  MessageEmbed,
   Snowflake,
   TextChannel
 } from "discord.js";
-import e from "express";
+import {
+  CHANNEL_IDS,
+  ROLE_IDS,
+  URLS
+} from "../data/id";
 import {
   Quiz
 } from "../util/quiz";
@@ -19,28 +22,6 @@ import {
   controller,
   listener
 } from "./decorator";
-
-
-const URLS = {
-  dictionary: "http://ziphil.com/program/interface/3.cgi",
-  github: "https://github.com/Ziphil/Xalzih"
-};
-const CHANNEL_IDS = {
-  sokad: {
-    rafles: "809024729419481148",
-    zelad: "809386921792241686",
-    sotik: "811477456300146698"
-  },
-  qilxaleh: {
-    rel: "809027836034809876"
-  },
-  tacatkuv: "809023120135946291",
-  test: "809151049608200192"
-};
-const ROLE_IDS = {
-  zisvalod: "809147316991950908",
-  xenoh: "809147578443759676"
-};
 
 
 @controller()
@@ -88,18 +69,18 @@ export class MainController extends Controller {
       if (deleteAfter) {
         await message.delete();
       }
-      let quizMessage = await this.searchQuizMessage(client, number);
-      if (quizMessage !== undefined) {
-        let content = quizMessage?.content;
-        let quiz = Quiz.parse(content);
-        if (quiz !== undefined) {
-          let embed = quiz.createEmbed(quizMessage.url);
-          await message.channel.send({embed});
-        } else {
-          await message.channel.send("kodat e zel atùk.");
+      let quiz;
+      for await (let candidateQuiz of Quiz.iterate(client)) {
+        if (candidateQuiz.number === number) {
+          quiz = candidateQuiz;
+          break;
         }
+      }
+      if (quiz !== undefined) {
+        let embed = quiz.createEmbed();
+        await message.channel.send({embed});
       } else {
-        await message.channel.send(`dukocaqat a zelad ac'${number}.`);
+        await message.channel.send("kodat e zel atùk.");
       }
     }
   }

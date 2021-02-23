@@ -5,8 +5,7 @@ import {
   Message,
   MessageEmbed,
   Snowflake,
-  TextChannel,
-  User
+  TextChannel
 } from "discord.js";
 import {
   CHANNEL_IDS
@@ -114,19 +113,19 @@ export class Quiz {
   }
 
   public get questionMarkup(): string {
-    let result = "";
-    result += `> ${this.sentences.shaleian}\n`;
-    result += `> ${this.sentences.translation}\n`;
-    result += this.choices;
-    return result;
+    let markup = "";
+    markup += `> ${this.sentences.shaleian}\n`;
+    markup += `> ${this.sentences.translation}\n`;
+    markup += this.choices;
+    return markup;
   }
 
 }
 
 
+export type QuizSentences = {shaleian: string, translation: string};
+export type QuizUrls = {problem: string, commentary: string};
+
 type QuizSources = {problem: Message, commentary: Message};
 type QuizRawIteration = {number: number, sources: QuizSources};
 type QuizIteration = {number: number, sources: QuizSources, quiz: Quiz};
-
-type QuizSentences = {shaleian: string, translation: string};
-type QuizUrls = {problem: string, commentary: string};

@@ -16,6 +16,9 @@ import {
   Quiz
 } from "../util/quiz";
 import {
+  QuizRecord
+} from "../util/quiz-record";
+import {
   Controller
 } from "./controller";
 import {
@@ -82,6 +85,21 @@ export class MainController extends Controller {
       } else {
         await message.channel.send("kodat e zel atùk.");
       }
+    }
+  }
+
+  @listener("message")
+  private async [Symbol()](client: Client, message: Message): Promise<void> {
+    let match = message.content.match(/^!result(-detuk)?$/);
+    if (match) {
+      let deleteAfter = match[1];
+      if (deleteAfter) {
+        await message.delete();
+      }
+      let user = message.author;
+      let record = await QuizRecord.fetch(client, user);
+      let embed = record.createEmbed();
+      await message.channel.send({embed});
     }
   }
 

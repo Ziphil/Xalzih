@@ -85,26 +85,6 @@ export class MainController extends Controller {
     }
   }
 
-  private async searchQuizMessage(client: Client, number: number): Promise<Message | undefined> {
-    let channel = client.channels.cache.get(CHANNEL_IDS.sokad.zelad);
-    if (channel instanceof TextChannel) {
-      let quizMessage = undefined as Message | undefined;
-      let before = undefined as Snowflake | undefined;
-      while (true) {
-        let messages = await channel.messages.fetch({limit: 100, before});
-        let regexp = new RegExp(`^\\*\\*\\[\\s*${number}\\s*\\]\\*\\*\\s*解説\\s*\n`);
-        quizMessage = messages.find((message) => message.content.match(regexp) !== null);
-        before = messages.last()?.id;
-        if (quizMessage !== undefined || messages.size < 100) {
-          break;
-        }
-      }
-      return quizMessage;
-    } else {
-      throw new Error("bug: this channel is not a text channel");
-    }
-  }
-
   // 検定チャンネルに問題が投稿されたときに、投稿文中に含まれている選択肢の絵文字のリアクションを自動的に付けます。
   // 選択肢として使える絵文字は、数字もしくはラテン文字の絵文字のみです。
   @listener("message")

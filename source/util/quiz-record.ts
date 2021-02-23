@@ -33,22 +33,26 @@ export class QuizRecord {
   // 与えられた番号のクイズの結果データを Google スプレッドシートに保存します。
   public static async save(client: Client, number: number) {
     let sheet = await QuizRecord.getSheet();
-    let statuses = await QuizRecord.calcStatuses(client, number);
-    let header = await QuizRecord.createHeader(sheet);
-    await QuizRecord.loadCellsForSave(sheet, number);
-    for (let [id, status] of statuses) {
-      let columnIndex = header.findIndex((candidateId) => candidateId === id);
-      if (columnIndex < 0) {
-        columnIndex = header.length;
-        sheet.getCell(0, columnIndex).value = id;
-        header.push(id);
+    let [quiz, statuses] = await QuizRecord.calcStatuses(client, number);
+    if (quiz !== undefined) {
+      let header = await QuizRecord.createHeader(sheet);
+      await QuizRecord.loadCellsForSave(sheet, number);
+      for (let [id, status] of statuses) {
+        let columnIndex = header.findIndex((candidateId) => candidateId === id);
+        if (columnIndex < 0) {
+          columnIndex = header.length;
+          sheet.getCell(0, columnIndex).value = id;
+          header.push(id);
+        }
+        sheet.getCell(number, columnIndex).value = status;
       }
-      sheet.getCell(number, columnIndex).value = status;
+      sheet.getCell(number, 1).value = quiz.urls.problem;
+      sheet.getCell(number, 2).value = quiz.urls.commentary;
+      await sheet.saveUpdatedCells();
     }
-    await sheet.saveUpdatedCells();
   }
 
-  private static async calcStatuses(client: Client, number: number): Promise<Map<Snowflake, QuizStatus>> {
+  private static async calcStatuses(client: Client, number: number): Promise<[Quiz | undefined, Map<Snowflake, QuizStatus>]> {
     let iteration = await (async () => {
       for await (let iteration of Quiz.iterate(client)) {
         if (iteration.number === number) {
@@ -82,9 +86,9 @@ export class QuizRecord {
         }
       });
       let statuses = new Map(statusEntries);
-      return statuses;
+      return [quiz, statuses];
     } else {
-      return new Map();
+      return [undefined, new Map()];
     }
   }
 
@@ -95,11 +99,12 @@ export class QuizRecord {
     let header = await QuizRecord.createHeader(sheet);
     let columnIndex = header.findIndex((candidateId) => candidateId === user.id);
     await QuizRecord.loadCellsForFetch(sheet, columnIndex);
+    let rowCount = sheet.rowCount;
     let results = new Map<number, QuizResult>();
-    for await (let {number, sources} of Quiz.iterateRaw(client)) {
+    for (let number = 1 ; number < rowCount ; number ++) {
       let status = sheet.getCell(number, columnIndex).value as QuizStatus | null;
       if (status !== null) {
-        let urls = {problem: sources.problem.url, commentary: sources.commentary.url};
+        let urls = {problem: sheet.getCell(number, 1).value?.toString() ?? "", commentary: sheet.getCell(number, 2).value?.toString() ?? ""};
         results.set(number, {status, urls});
       }
     }
@@ -183,7 +188,7 @@ export class QuizRecord {
   private static async loadCellsForFetch(sheet: GoogleSpreadsheetWorksheet, columnIndex: number): Promise<void> {
     let wholeRowCount = sheet.rowCount;
     await sheet.loadCells([
-      {startRowIndex: 0, endRowIndex: wholeRowCount, startColumnIndex: 0, endColumnIndex: 1},
+      {startRowIndex: 0, endRowIndex: wholeRowCount, startColumnIndex: 0, endColumnIndex: 3},
       {startRowIndex: 0, endRowIndex: wholeRowCount, startColumnIndex: columnIndex, endColumnIndex: columnIndex + 1}
     ]);
   }
@@ -197,14 +202,16 @@ export class QuizRecord {
     embed.addField("\u{2705} 正解", `**${counts.correct}** / ${counts.all}`, true);
     embed.addField("\u{274E} 不正解", `**${counts.wrong}** / ${counts.all}`, true);
     embed.addField("\u{1F196} 無効", `**${counts.invalid}** / ${counts.all}`, true);
-    embed.addField("個別成績", this.resultMarkup, false);
+    if (this.results.size > 0) {
+      embed.addField("個別成績", this.resultMarkup, false);
+    }
     return embed;
   }
 
   public get resultMarkup(): string {
     let markup = "";
     if (this.results.size > 0) {
-      let entries = Array.from(this.results.entries());
+      let entries = Array.from(this.results.entries()).sort(([firstNumber], [secondNumber]) => secondNumber - firstNumber);
       let resultMarkups = entries.map(([number, result]) => {
         let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
         return `[${number}](${result.urls.commentary}) ${statusMark}`;

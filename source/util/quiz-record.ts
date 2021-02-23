@@ -2,12 +2,18 @@
 
 import {
   Client,
-  Message,
   MessageEmbed,
   Snowflake,
-  TextChannel,
   User
 } from "discord.js";
+import {
+  GoogleSpreadsheet,
+  GoogleSpreadsheetWorksheet
+} from "google-spreadsheet";
+import {
+  SPREADSHEET_CREDENTIALS,
+  SPREADSHEET_ID
+} from "../variable";
 import {
   Quiz,
   QuizUrls
@@ -24,7 +30,87 @@ export class QuizRecord {
     this.results = results;
   }
 
-  public static async fetch(client: Client, user: User) {
+  // 与えられた番号のクイズの結果データを Google スプレッドシートに保存します。
+  public static async save(client: Client, number: number) {
+    let sheet = await QuizRecord.getSheet();
+    let statuses = await QuizRecord.calcStatuses(client, number);
+    let header = await QuizRecord.createHeader(sheet);
+    await QuizRecord.loadCellsForSave(sheet, number);
+    for (let [id, status] of statuses) {
+      let columnIndex = header.findIndex((candidateId) => candidateId === id);
+      if (columnIndex < 0) {
+        columnIndex = header.length;
+        sheet.getCell(0, columnIndex).value = id;
+        header.push(id);
+      }
+      sheet.getCell(number, columnIndex).value = status;
+    }
+    await sheet.saveUpdatedCells();
+  }
+
+  private static async calcStatuses(client: Client, number: number): Promise<Map<Snowflake, QuizStatus>> {
+    let iteration = await (async () => {
+      for await (let iteration of Quiz.iterate(client)) {
+        if (iteration.number === number) {
+          return iteration;
+        }
+      }
+    })();
+    if (iteration !== undefined) {
+      let {sources, quiz} = iteration;
+      let selectionsMap = new Map<Snowflake, Array<string>>();
+      let promises = quiz.choices.map(async (choice) => {
+        let mark = choice.mark;
+        let reaction = sources.problem.reactions.resolve(mark);
+        let users = await reaction?.users.fetch() ?? [];
+        for (let [, user] of users) {
+          let selections = selectionsMap.get(user.id) ?? [];
+          selections.push(mark);
+          selectionsMap.set(user.id, selections);
+        }
+      });
+      await Promise.all(promises);
+      let statusEntries = Array.from(selectionsMap.entries()).map(([id, selections]) => {
+        if (selections.length > 1) {
+          return [id, "invalid"] as const;
+        } else {
+          if (selections[0] === quiz.answer) {
+            return [id, "correct"] as const;
+          } else {
+            return [id, "wrong"] as const;
+          }
+        }
+      });
+      let statuses = new Map(statusEntries);
+      return statuses;
+    } else {
+      return new Map();
+    }
+  }
+
+  // 与えられたユーザーのクイズの成績を取得します。
+  // Google スプレッドシートのデータをもとに成績を取得するため、返されるデータはスプレッドシートに保存された段階での成績であり、最新のデータであるとは限りません。
+  public static async fetch(client: Client, user: User): Promise<QuizRecord> {
+    let sheet = await QuizRecord.getSheet();
+    let header = await QuizRecord.createHeader(sheet);
+    let columnIndex = header.findIndex((candidateId) => candidateId === user.id);
+    await QuizRecord.loadCellsForFetch(sheet, columnIndex);
+    let results = new Map<number, QuizResult>();
+    for await (let {number, sources} of Quiz.iterateRaw(client)) {
+      let status = sheet.getCell(number, columnIndex).value as QuizStatus | null;
+      if (status !== null) {
+        let urls = {problem: sources.problem.url, commentary: sources.commentary.url};
+        results.set(number, {status, urls});
+      }
+    }
+    let record = new QuizRecord(user, results);
+    return record;
+  }
+
+  // 与えられたユーザーのクイズの成績を取得します。
+  // Discord から直接情報を取得して成績を集計するため、返されるデータは常に最新のものになります。
+  // ただし、Discord API を大量に呼び出す関係上、動作は非常に低速です。
+  public static async fetchDirect(client: Client, user: User): Promise<QuizRecord> {
     let results = new Map<number, QuizResult>();
     let iterations = [];
     for await (let iteration of Quiz.iterate(client)) {
@@ -61,6 +147,45 @@ export class QuizRecord {
     await Promise.all(promises);
     let record = new QuizRecord(user, results);
     return record;
+  }
+
+  private static async getSheet(): Promise<GoogleSpreadsheetWorksheet> {
+    let document = new GoogleSpreadsheet(SPREADSHEET_ID);
+    await document.useServiceAccountAuth(SPREADSHEET_CREDENTIALS);
+    await document.loadInfo();
+    let sheet = document.sheetsByIndex[0];
+    return sheet;
+  }
+
+  private static async createHeader(sheet: GoogleSpreadsheetWorksheet): Promise<Array<Snowflake>> {
+    let wholeColumnCount = sheet.columnCount;
+    await sheet.loadCells({startRowIndex: 0, endRowIndex: 1, startColumnIndex: 0, endColumnIndex: wholeColumnCount});
+    let columnCount = sheet.columnCount;
+    let header = [];
+    for (let index = 0 ; index < columnCount ; index ++) {
+      let cell = sheet.getCell(0, index);
+      if (cell.value !== null) {
+        header[index] = cell.value.toString();
+      } else {
+        break;
+      }
+    }
+    return header;
+  }
+
+  private static async loadCellsForSave(sheet: GoogleSpreadsheetWorksheet, number: number): Promise<void> {
+    let wholeColumnCount = sheet.columnCount;
+    await sheet.loadCells([
+      {startRowIndex: number, endRowIndex: number + 1, startColumnIndex: 0, endColumnIndex: wholeColumnCount}
+    ]);
+  }
+
+  private static async loadCellsForFetch(sheet: GoogleSpreadsheetWorksheet, columnIndex: number): Promise<void> {
+    let wholeRowCount = sheet.rowCount;
+    await sheet.loadCells([
+      {startRowIndex: 0, endRowIndex: wholeRowCount, startColumnIndex: 0, endColumnIndex: 1},
+      {startRowIndex: 0, endRowIndex: wholeRowCount, startColumnIndex: columnIndex, endColumnIndex: columnIndex + 1}
+    ]);
   }
 
   public createEmbed(): MessageEmbed {
@@ -103,5 +228,6 @@ export class QuizRecord {
 }
 
 
-export type QuizResult = {status: "correct" | "wrong" | "invalid", urls: QuizUrls};
+export type QuizStatus = "correct" | "wrong" | "invalid";
+export type QuizResult = {status: QuizStatus, urls: QuizUrls};
 export type QuizResultCounts = {all: number, correct: number, wrong: number, invalid: number};

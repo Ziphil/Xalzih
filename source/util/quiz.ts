@@ -31,8 +31,8 @@ export class Quiz {
   }
 
   public static async *iterate(client: Client): AsyncGenerator<QuizIteration> {
-    for await (let {number, sources} of this.iterateRaw(client)) {
-      let quiz = this.parse(sources);
+    for await (let {number, sources} of Quiz.iterateRaw(client)) {
+      let quiz = Quiz.parse(sources);
       if (quiz !== undefined) {
         yield {number, sources, quiz};
       }
@@ -72,6 +72,16 @@ export class Quiz {
         }
       }
     }
+  }
+
+  public static async findByNumber(client: Client, number: number): Promise<Quiz | undefined> {
+    for await (let iteration of Quiz.iterateRaw(client)) {
+      if (iteration.number === number) {
+        let quiz = Quiz.parse(iteration.sources);
+        return quiz;
+      }
+    }
+    return undefined;
   }
 
   public static parse(sources: QuizSources): Quiz | undefined {

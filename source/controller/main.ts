@@ -3,9 +3,7 @@
 import axios from "axios";
 import {
   Client,
-  Message,
-  Snowflake,
-  TextChannel
+  Message
 } from "discord.js";
 import {
   CHANNEL_IDS,
@@ -72,15 +70,9 @@ export class MainController extends Controller {
       if (deleteAfter) {
         await message.delete();
       }
-      let hitQuiz;
-      for await (let {quiz} of Quiz.iterate(client)) {
-        if (quiz.number === number) {
-          hitQuiz = quiz;
-          break;
-        }
-      }
-      if (hitQuiz !== undefined) {
-        let embed = hitQuiz.createEmbed();
+      let quiz = await Quiz.findByNumber(client, number);
+      if (quiz !== undefined) {
+        let embed = quiz.createEmbed();
         await message.channel.send({embed});
       } else {
         await message.channel.send("kodat e zel atùk.");
@@ -101,6 +93,16 @@ export class MainController extends Controller {
       let record = await QuizRecord.fetch(client, user);
       let embed = record.createEmbed();
       await message.channel.send({embed});
+    }
+  }
+
+  @listener("message")
+  private async [Symbol()](client: Client, message: Message): Promise<void> {
+    let match = message.content.match(/^!save\s+(\d+)$/);
+    if (match) {
+      let number = +match[1];
+      await message.delete();
+      await QuizRecord.save(client, number);
     }
   }
 

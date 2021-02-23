@@ -31,16 +31,16 @@ export class QuizRecord {
       iterations.push(iteration);
     }
     let promises = iterations.map(async ({quiz, sources}) => {
-      let promises = quiz.choices.map((choice) => {
+      let selectPromises = quiz.choices.map((choice) => {
         let mark = choice.mark;
         let reaction = sources.problem.reactions.resolve(mark);
-        let promise = reaction?.users.fetch().then((selectUsers) => {
+        let selectPromise = reaction?.users.fetch().then((selectUsers) => {
           let selected = selectUsers.find((selectUser) => selectUser.id === user.id) !== undefined;
           return {mark, selected};
         });
-        return promise ?? {mark, selected: false};
+        return selectPromise ?? {mark, selected: false};
       });
-      let selectResults = await Promise.all(promises);
+      let selectResults = await Promise.all(selectPromises);
       let correct = false;
       let wrong = false;
       for (let selectResult of selectResults) {
@@ -78,11 +78,16 @@ export class QuizRecord {
 
   public get resultMarkup(): string {
     let markup = "";
-    let resultMarkups = Array.from(this.results.entries()).map(([number, result]) => {
-      let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
-      return `[${number}](${result.urls.commentary}) ${statusMark}`;
-    });
-    markup += resultMarkups.join("　");
+    if (this.results.size > 0) {
+      let entries = Array.from(this.results.entries());
+      let resultMarkups = entries.map(([number, result]) => {
+        let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
+        return `[${number}](${result.urls.commentary}) ${statusMark}`;
+      });
+      markup += resultMarkups.join("　");
+    } else {
+      markup += "データがありません";
+    }
     return markup;
   }
 

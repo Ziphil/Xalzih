@@ -15,17 +15,15 @@ import {
 export class Quiz {
 
   public readonly number: number;
-  public readonly shaleian: string;
-  public readonly translation: string;
+  public readonly sentences: Readonly<QuizSentences>;
   public readonly choices: string;
   public readonly answer: string;
   public readonly commentary: string;
-  public readonly urls: QuizUrls;
+  public readonly urls: Readonly<QuizUrls>;
 
-  private constructor(number: number, shaleian: string, translation: string, choices: string, answer: string, commentary: string, urls: QuizUrls) {
+  private constructor(number: number, sentences: QuizSentences, choices: string, answer: string, commentary: string, urls: QuizUrls) {
     this.number = number;
-    this.shaleian = shaleian;
-    this.translation = translation;
+    this.sentences = sentences;
     this.choices = choices;
     this.answer = answer;
     this.commentary = commentary;
@@ -86,13 +84,14 @@ export class Quiz {
       let answerMatch = commentaryLines[0]?.match(/\*\*\s*正解\s*\*\*\s*:\s*(.+)/);
       if (mainLines.length >= 4 && commentaryLines.length >= 2 && numberMatch && shaleianMatch && translationMatch && answerMatch) {
         let number = +numberMatch[1];
-        let shaleian = shaleianMatch[1].trim();
-        let translation = translationMatch[1].trim();
+        let shaleianSentence = shaleianMatch[1].trim();
+        let translationSentence = translationMatch[1].trim();
+        let sentences = {shaleian: shaleianSentence, translation: translationSentence};
         let choices = mainLines[3].trim();
         let answer = answerMatch[1].trim();
         let commentary = commentaryLines.slice(1, -1).join("").trim();
         let urls = {problem: quizMessages.problem.url, commentary: quizMessages.commentary.url};
-        let quiz = new Quiz(number, shaleian, translation, choices, answer, commentary, urls);
+        let quiz = new Quiz(number, sentences, choices, answer, commentary, urls);
         return quiz;
       } else {
         return undefined;
@@ -114,8 +113,8 @@ export class Quiz {
 
   public get questionMarkup(): string {
     let result = "";
-    result += `> ${this.shaleian}\n`;
-    result += `> ${this.translation}\n`;
+    result += `> ${this.sentences.shaleian}\n`;
+    result += `> ${this.sentences.translation}\n`;
     result += this.choices;
     return result;
   }
@@ -124,4 +123,5 @@ export class Quiz {
 
 
 type QuizMessages = {problem: Message, commentary: Message};
+type QuizSentences = {shaleian: string, translation: string};
 type QuizUrls = {problem: string, commentary: string};

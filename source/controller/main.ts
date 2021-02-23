@@ -90,13 +90,14 @@ export class MainController extends Controller {
 
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
-    let match = message.content.match(/^!result(-detuk)?$/);
+    let match = message.content.match(/^!result(-detuk)?(?:\s+(\d+))?$/);
     if (match) {
       let deleteAfter = match[1];
+      let userId = match[2];
       if (deleteAfter) {
         await message.delete();
       }
-      let user = message.author;
+      let user = (userId) ? await client.users.fetch(userId) : message.author;
       let record = await QuizRecord.fetch(client, user);
       let embed = record.createEmbed();
       await message.channel.send({embed});

@@ -106,7 +106,8 @@ export class Quiz {
     embed.description = this.questionMarkup;
     embed.color = 0x33C3FF;
     embed.addField("正解", `||${this.answer}||`, true);
-    embed.addField("原文リンク", `[こちら](${this.urls.problem})`, true);
+    embed.addField("問題リンク", `[こちら](${this.urls.problem})`, true);
+    embed.addField("解説リンク", `[こちら](${this.urls.commentary})`, true);
     embed.addField("解説", `||${this.commentary}||`, false);
     return embed;
   }

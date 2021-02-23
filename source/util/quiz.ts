@@ -5,7 +5,8 @@ import {
   Message,
   MessageEmbed,
   Snowflake,
-  TextChannel
+  TextChannel,
+  User
 } from "discord.js";
 import {
   CHANNEL_IDS
@@ -30,20 +31,20 @@ export class Quiz {
     this.urls = urls;
   }
 
-  public static async *iterate(client: Client): AsyncGenerator<Quiz> {
-    for await (let quizMessages of this.iterateRaw(client)) {
-      let quiz = this.parse(quizMessages);
+  public static async *iterate(client: Client): AsyncGenerator<QuizIteration> {
+    for await (let {number, sources} of this.iterateRaw(client)) {
+      let quiz = this.parse(sources);
       if (quiz !== undefined) {
-        yield quiz;
+        yield {number, sources, quiz};
       }
     }
   }
 
-  public static async *iterateRaw(client: Client): AsyncGenerator<QuizMessages> {
+  public static async *iterateRaw(client: Client): AsyncGenerator<QuizRawIteration> {
     let channel = client.channels.cache.get(CHANNEL_IDS.sokad.zelad);
     if (channel instanceof TextChannel) {
       let before = undefined as Snowflake | undefined;
-      let quizMessageMaps = new Map<number, Partial<QuizMessages>>();
+      let sourceMap = new Map<number, Partial<QuizSources>>();
       while (true) {
         let messages = await channel.messages.fetch({limit: 100, before});
         for (let [, message] of messages) {
@@ -51,17 +52,18 @@ export class Quiz {
           let commentaryMatch = message.content.match(/^\*\*\[\s*(\d+)\s*\]\*\*\s*解説\s*\n/);
           if (problemMatch !== null || commentaryMatch !== null) {
             let number = +(problemMatch ?? commentaryMatch)![1];
-            let quizMessages = quizMessageMaps.get(number) ?? {};
+            let partialSources = sourceMap.get(number) ?? {};
             if (problemMatch !== null) {
-              quizMessages.problem = message;
+              partialSources.problem = message;
             } else {
-              quizMessages.commentary = message;
+              partialSources.commentary = message;
             }
-            if (quizMessages.problem !== undefined && quizMessages.commentary !== undefined) {
-              quizMessageMaps.delete(number);
-              yield quizMessages as QuizMessages;
+            if (partialSources.problem !== undefined && partialSources.commentary !== undefined) {
+              sourceMap.delete(number);
+              let sources = partialSources as QuizSources;
+              yield {number, sources};
             } else {
-              quizMessageMaps.set(number, quizMessages);
+              sourceMap.set(number, partialSources);
             }
           }
         }
@@ -73,8 +75,8 @@ export class Quiz {
     }
   }
 
-  public static parse(quizMessages: QuizMessages): Quiz | undefined {
-    let wholeMatch = quizMessages.commentary.content.match(/^(.+?)―{2,}\s*\n\s*\|\|(.+?)\|\|/s);
+  public static parse(sources: QuizSources): Quiz | undefined {
+    let wholeMatch = sources.commentary.content.match(/^(.+?)―{2,}\s*\n\s*\|\|(.+?)\|\|/s);
     if (wholeMatch) {
       let mainLines = wholeMatch[1].trim().split(/\n/);
       let commentaryLines = wholeMatch[2].trim().split(/\n/);
@@ -90,7 +92,7 @@ export class Quiz {
         let choices = mainLines[3].trim();
         let answer = answerMatch[1].trim();
         let commentary = commentaryLines.slice(1, -1).join("").trim();
-        let urls = {problem: quizMessages.problem.url, commentary: quizMessages.commentary.url};
+        let urls = {problem: sources.problem.url, commentary: sources.commentary.url};
         let quiz = new Quiz(number, sentences, choices, answer, commentary, urls);
         return quiz;
       } else {
@@ -122,6 +124,9 @@ export class Quiz {
 }
 
 
-type QuizMessages = {problem: Message, commentary: Message};
+type QuizSources = {problem: Message, commentary: Message};
+type QuizRawIteration = {number: number, sources: QuizSources};
+type QuizIteration = {number: number, sources: QuizSources, quiz: Quiz};
+
 type QuizSentences = {shaleian: string, translation: string};
 type QuizUrls = {problem: string, commentary: string};

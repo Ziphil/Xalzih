@@ -69,15 +69,15 @@ export class MainController extends Controller {
       if (deleteAfter) {
         await message.delete();
       }
-      let quiz;
-      for await (let candidateQuiz of Quiz.iterate(client)) {
-        if (candidateQuiz.number === number) {
-          quiz = candidateQuiz;
+      let hitQuiz;
+      for await (let {quiz} of Quiz.iterate(client)) {
+        if (quiz.number === number) {
+          hitQuiz = quiz;
           break;
         }
       }
-      if (quiz !== undefined) {
-        let embed = quiz.createEmbed();
+      if (hitQuiz !== undefined) {
+        let embed = hitQuiz.createEmbed();
         await message.channel.send({embed});
       } else {
         await message.channel.send("kodat e zel atùk.");

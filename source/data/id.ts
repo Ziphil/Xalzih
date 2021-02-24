@@ -16,7 +16,8 @@ export const CHANNEL_IDS = {
     rel: "809027836034809876"
   },
   tacatkuv: "809023120135946291",
-  test: "809151049608200192"
+  test: "809151049608200192",
+  bot: "813971504001843201"
 };
 export const ROLE_IDS = {
   zisvalod: "809147316991950908",

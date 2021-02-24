@@ -32,6 +32,7 @@ export class MainController extends Controller {
   private async [Symbol()](client: Client): Promise<void> {
     console.log("xalzih ready");
     await client.user?.setPresence({activity: {name: "xalzih", url: URLS.github}});
+    await this.log(client, "Ready");
   }
 
   // 任意のチャンネルの「!sotik (単語)」という投稿に反応して、オンライン辞典から該当単語のエントリーを抽出して投稿します。
@@ -80,8 +81,8 @@ export class MainController extends Controller {
     }
   }
 
-  // 任意のチャンネルの「!result」という投稿に反応して、その投稿をしたユーザーのクイズの成績を整形して投稿します。
-  // コマンド名部分を「!result」の代わりに「!result-detuk」とすると、そのコマンドの投稿が削除されます。
+  // 任意のチャンネルの「!doklet」という投稿に反応して、その投稿をしたユーザーのクイズの成績を整形して投稿します。
+  // コマンド名部分を「!doklet」の代わりに「!doklet-detuk」とすると、そのコマンドの投稿が削除されます。
   @listener("message")
   private async [Symbol()](client: Client, message: Message): Promise<void> {
     let match = message.content.match(/^!doklet(-detuk)?(?:\s+(\d+))?$/);
@@ -107,6 +108,7 @@ export class MainController extends Controller {
         let number = +match[1];
         await message.delete();
         await QuizRecord.save(client, number);
+        await this.log(client, `Successfully saved: ${number}`);
       }
     }
   }

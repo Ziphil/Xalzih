@@ -102,10 +102,15 @@ export class QuizRecord {
     let rowCount = sheet.rowCount;
     let results = new Map<number, QuizResult>();
     for (let number = 1 ; number < rowCount ; number ++) {
+      let exist = sheet.getCell(number, 0).value !== null;
       let status = sheet.getCell(number, columnIndex).value as QuizStatus | null;
-      if (status !== null) {
-        let urls = {problem: sheet.getCell(number, 1).value?.toString() ?? "", commentary: sheet.getCell(number, 2).value?.toString() ?? ""};
-        results.set(number, {status, urls});
+      if (exist) {
+        if (status !== null) {
+          let urls = {problem: sheet.getCell(number, 1).value?.toString() ?? "", commentary: sheet.getCell(number, 2).value?.toString() ?? ""};
+          results.set(number, {status, urls});
+        }
+      } else {
+        break;
       }
     }
     let record = new QuizRecord(user, results);

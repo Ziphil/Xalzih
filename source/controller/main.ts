@@ -30,7 +30,6 @@ export class MainController extends Controller {
 
   @listener("ready")
   private async [Symbol()](client: Client): Promise<void> {
-    console.log("xalzih ready");
     await client.user?.setPresence({activity: {name: "xalzih", url: URLS.github}});
     await this.log(client, "Ready");
   }

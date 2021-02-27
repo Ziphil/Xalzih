@@ -207,9 +207,9 @@ export class QuizRecord {
     let correctPercentString = (counts.all > 0) ? ` (**${(counts.correct / counts.all * 100).toFixed(1)}** %)` : "";
     let wrongPercentString = (counts.all > 0) ? ` (**${(counts.wrong / counts.all * 100).toFixed(1)}** %)` : "";
     let invalidPercentString = (counts.all > 0) ? ` (**${(counts.invalid / counts.all * 100).toFixed(1)}** %)` : "";
-    embed.addField("\u{2705} 正解", `**${counts.correct}** / ${counts.all}${correctPercentString}`, true);
+    embed.addField("\u{2611} 正解", `**${counts.correct}** / ${counts.all}${correctPercentString}`, true);
     embed.addField("\u{274E} 不正解", `**${counts.wrong}** / ${counts.all}${wrongPercentString}`, true);
-    embed.addField("\u{1F196} 無効", `**${counts.invalid}** / ${counts.all}${invalidPercentString}`, true);
+    embed.addField("\u{1F6AB} 無効", `**${counts.invalid}** / ${counts.all}${invalidPercentString}`, true);
     if (this.results.size > 0) {
       embed.addField("個別成績", this.resultMarkup, false);
     }
@@ -221,7 +221,7 @@ export class QuizRecord {
     if (this.results.size > 0) {
       let entries = Array.from(this.results.entries()).sort(([firstNumber], [secondNumber]) => secondNumber - firstNumber);
       let resultMarkups = entries.map(([number, result]) => {
-        let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
+        let statusMark = (result.status === "invalid") ? "\u{1F6AB}" : (result.status === "correct") ? "\u{2611}" : "\u{274E}";
         return `${number} ${statusMark}`;
       });
       markup += resultMarkups.join(" · ");

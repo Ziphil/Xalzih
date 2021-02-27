@@ -219,9 +219,9 @@ export class QuizRecord {
       let entries = Array.from(this.results.entries()).sort(([firstNumber], [secondNumber]) => secondNumber - firstNumber);
       let resultMarkups = entries.map(([number, result]) => {
         let statusMark = (result.status === "invalid") ? "\u{1F196}" : (result.status === "correct") ? "\u{2705}" : "\u{274E}";
-        return `[${number}](${result.urls.commentary}) ${statusMark}`;
+        return `${number} ${statusMark}`;
       });
-      markup += resultMarkups.join("　");
+      markup += resultMarkups.join(" · ");
     } else {
       markup += "データがありません";
     }

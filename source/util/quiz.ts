@@ -16,7 +16,7 @@ export class Quiz {
 
   public readonly number: number;
   public readonly sentences: Readonly<QuizSentences>;
-  public readonly choices: ReadonlyArray<QuizChoice>;
+  public readonly choices: ReadonlyArray<Readonly<QuizChoice>>;
   public readonly answer: string;
   public readonly commentary: string;
   public readonly urls: Readonly<QuizUrls>;

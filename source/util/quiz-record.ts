@@ -23,7 +23,7 @@ import {
 export class QuizRecord {
 
   public readonly user: User;
-  public readonly results: Map<number, QuizResult>;
+  public readonly results: ReadonlyMap<number, Readonly<QuizResult>>;
 
   private constructor(user: User, results: Map<number, QuizResult>) {
     this.user = user;

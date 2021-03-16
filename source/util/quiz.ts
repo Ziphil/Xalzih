@@ -47,7 +47,7 @@ export class Quiz {
       while (true) {
         let messages = await channel.messages.fetch({limit: 100, before});
         for (let [, message] of messages) {
-          let problemMatch = message.content.match(/^\*\*\[\s*(\d+)\s*\]\*\*\s*\n/);
+          let problemMatch = message.content.match(/^\*\*\[\s*(\d+)\s*\]\*\*\s*(☆|★)*\s*\n/);
           let commentaryMatch = message.content.match(/^\*\*\[\s*(\d+)\s*\]\*\*\s*解説\s*\n/);
           if (problemMatch !== null || commentaryMatch !== null) {
             let number = +(problemMatch ?? commentaryMatch)![1];

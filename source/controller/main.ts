@@ -119,7 +119,7 @@ export class MainController extends Controller {
     let hasPermission = message.member?.roles.cache.find((role) => role.id === ROLE_IDS.zisvalod) !== undefined;
     let correctChannel = message.channel.id === CHANNEL_IDS.sokad.zelad || message.channel.id === CHANNEL_IDS.test;
     if (hasPermission && correctChannel) {
-      if (message.content.match(/^\*\*\[\s*\d+\s*\]\*\*\s*\n/)) {
+      if (message.content.match(/^\*\*\[\s*(\d+)\s*\]\*\*\s*(☆|★)*\s*\n/)) {
         let matches = message.content.matchAll(/(..\u{20E3}|[\u{1F1E6}-\u{1F1FF}])/gu);
         for (let match of matches) {
           await message.react(match[0]);

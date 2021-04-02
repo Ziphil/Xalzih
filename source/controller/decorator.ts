@@ -12,9 +12,12 @@ import {
 
 const KEY = Symbol("key");
 
-type ClientEventKeys = keyof ClientEvents;
 type Metadata = Array<{name: string | symbol, event: ClientEventKeys}>;
+type ClientEventKeys = keyof ClientEvents;
+
 type ControllerDecorator = (clazz: new() => Controller) => void;
+type ListenerMethodDecorator<E extends ClientEventKeys> = (target: object, name: string | symbol, descriptor: TypedPropertyDescriptor<ListenerMethod<E>>) => void;
+type ListenerMethod<E extends ClientEventKeys> = (client: Client, ...args: ClientEvents[E]) => any;
 
 export function controller(): ControllerDecorator {
   let decorator = function (clazz: new() => Controller): void {
@@ -38,8 +41,8 @@ export function controller(): ControllerDecorator {
   return decorator;
 }
 
-export function listener(event: ClientEventKeys): MethodDecorator {
-  let decorator = function (target: object, name: string | symbol, descriptor: PropertyDescriptor): void {
+export function listener<E extends ClientEventKeys>(event: E): ListenerMethodDecorator<E> {
+  let decorator = function (target: object, name: string | symbol, descriptor: TypedPropertyDescriptor<ListenerMethod<E>>): void {
     let metadata = Reflect.getMetadata(KEY, target) as Metadata;
     if (!metadata) {
       metadata = [];

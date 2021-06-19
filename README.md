@@ -6,11 +6,5 @@
 
 
 ## 概要
-[シャレイア語 Discord サーバー](https://discord.gg/qdRyE2ZExf)で稼働している bot です。
-かわいがってあげてね。
-
-## 使い方
-このリポジトリをクローンして、npm プロジェクトとして実行してください。
-```
-npm start
-```
+[シャレイア語 Discord サーバー](https://discord.gg/qdRyE2ZExf)で稼働している bot でした。
+現在は、[シャレイア語辞典 Web システム](https://github.com/Ziphil/ShaleianOnline)に統合されています。
